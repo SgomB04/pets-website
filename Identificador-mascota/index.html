@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Clientes PRO</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<style>
+body{font-family:Arial;background:#f5f5f5;text-align:center;}
+.card{background:white;padding:20px;border-radius:15px;max-width:400px;margin:20px auto;}
+input{width:100%;padding:10px;margin:5px 0;}
+button{padding:10px;margin:5px;border:none;background:black;color:white;cursor:pointer;}
+img{width:100px;border-radius:10px;}
+</style>
+
+</head>
+
+<body>
+
+<div id="login" class="card">
+  <h2>Login</h2>
+  <input id="email" placeholder="Correo">
+  <input id="password" type="password" placeholder="Contraseña">
+  <button id="btnLogin">Entrar</button>
+</div>
+
+<div id="app" style="display:none">
+
+  <div class="card">
+    <input id="busqueda" placeholder="Buscar...">
+  </div>
+
+  <div class="card">
+    <input id="nombre" placeholder="Nombre">
+    <input id="telefono" placeholder="Teléfono">
+    <input id="mascota" placeholder="Mascota">
+    <input type="file" id="foto">
+    <button id="btnGuardar">Guardar</button>
+    <button id="btnLogout">Cerrar sesión</button>
+  </div>
+
+  <div id="lista"></div>
+
+</div>
+
+<script>
+
+// 🔥 PEGA AQUÍ TUS DATOS
+const db = supabase.createClient(
+  "https://qiuuzdviyapybndfiihs.supabase.co",
+  "sb_publishable_uZByT22d0FbsJg4FBouTPw_EMhHFpTC"
+);
+
+let clientes = [];
+
+// 🔐 Detectar sesión
+async function checkUser(){
+  const { data: { session } } = await db.auth.getSession();
+
+  if(session){
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    cargar();
+  } else {
+    document.getElementById("login").style.display = "block";
+    document.getElementById("app").style.display = "none";
+  }
+}
+
+checkUser();
+
+// 🔐 LOGIN
+document.getElementById("btnLogin").addEventListener("click", async () => {
+
+  const { error } = await db.auth.signInWithPassword({
+    email: document.getElementById("email").value,
+    password: document.getElementById("password").value
+  });
+
+  if(error){
+    alert(error.message);
+  } else {
+    alert("Login correcto");
+    checkUser();
+  }
+
+});
+
+// 🚪 LOGOUT
+document.getElementById("btnLogout").addEventListener("click", async () => {
+  await db.auth.signOut();
+  checkUser();
+});
+
+// ➕ GUARDAR
+document.getElementById("btnGuardar").addEventListener("click", async () => {
+
+  try {
+
+    let archivo = document.getElementById("foto").files[0];
+    let url = "";
+
+    // 📸 Subir foto (si hay)
+    if (archivo) {
+      let nombreArchivo = Date.now() + "_" + archivo.name;
+
+      const { error: errorUpload } = await db.storage
+        .from("fotos")
+        .upload(nombreArchivo, archivo);
+
+      if (errorUpload) {
+        alert("Error subiendo imagen: " + errorUpload.message);
+        return;
+      }
+
+      url = db.storage
+        .from("fotos")
+        .getPublicUrl(nombreArchivo).data.publicUrl;
+    }
+
+    // 💾 Guardar en DB
+    const { error } = await db.from("clientes").insert([{
+      nombre: document.getElementById("nombre").value,
+      telefono: document.getElementById("telefono").value,
+      mascota: document.getElementById("mascota").value,
+      foto: url
+    }]);
+
+    if (error) {
+      alert("Error guardando: " + error.message);
+      return;
+    }
+
+    // ✅ Éxito
+    alert("Cliente guardado correctamente");
+
+    // Limpiar inputs
+    document.getElementById("nombre").value = "";
+    document.getElementById("telefono").value = "";
+    document.getElementById("mascota").value = "";
+    document.getElementById("foto").value = "";
+
+    // Recargar lista
+    cargar();
+
+  } catch (err) {
+    alert("Error inesperado: " + err.message);
+  }
+
+});
+
+// 📥 CARGAR
+async function cargar(){
+  let { data } = await db.from("clientes").select("*");
+  clientes = data || [];
+  render(clientes);
+}
+
+// 🎨 RENDER
+function render(lista){
+  let html = "";
+
+  lista.forEach(c => {
+    html += `
+      <div class="card">
+        <b>${c.nombre}</b><br>
+        📞 ${c.telefono}<br>
+        🐶 ${c.mascota}<br>
+        ${c.foto ? `<img src="${c.foto}">` : ""}<br>
+
+        <button onclick="eliminar('${c.id}')">Eliminar</button>
+        <button onclick="editar('${c.id}')">Editar</button>
+      </div>
+    `;
+  });
+
+  document.getElementById("lista").innerHTML = html;
+}
+
+// 🗑️ ELIMINAR
+window.eliminar = async function(id){
+  await db.from("clientes").delete().eq("id", id);
+  cargar();
+};
+
+// ✏️ EDITAR
+window.editar = async function(id){
+  let nuevoNombre = prompt("Nuevo nombre:");
+  let nuevoTelefono = prompt("Nuevo teléfono:");
+  let nuevaMascota = prompt("Nueva mascota:");
+
+  await db.from("clientes").update({
+    nombre: nuevoNombre,
+    telefono: nuevoTelefono,
+    mascota: nuevaMascota
+  }).eq("id", id);
+
+  cargar();
+};
+
+// 🔍 BUSCAR
+document.getElementById("busqueda").addEventListener("keyup", () => {
+
+  let texto = document.getElementById("busqueda").value.toLowerCase();
+
+  let filtrados = clientes.filter(c =>
+    c.nombre.toLowerCase().includes(texto) ||
+    c.mascota.toLowerCase().includes(texto)
+  );
+
+  render(filtrados);
+
+});
+
+</script>
+
+</body>
+</html>
