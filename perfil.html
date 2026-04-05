@@ -2,46 +2,60 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Mascota</title>
-
+<title>Perfil de Cliente</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f5f5f5; text-align: center; padding: 20px; }
+  .card { background: #fff; padding: 20px; border-radius: 15px; max-width: 400px; margin: 20px auto; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+  img { width: 200px; border-radius: 10px; margin-top: 10px; }
+  h2 { margin-bottom: 10px; }
+  p { margin: 5px 0; }
+</style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
 </head>
 <body>
 
-<div id="perfil"></div>
+<div id="perfil" class="card">Cargando...</div>
 
 <script>
-
+// 🔥 Reemplaza con tus datos de Supabase
 const db = supabase.createClient(
-  "https://qiuuzdviyapybndfiihs.supabase.co",
-  "sb_publishable_uZByT22d0FbsJg4FBouTPw_EMhHFpTC"
+  "TU_PROJECT_URL",
+  "TU_PUBLISHABLE_KEY"
 );
 
 // Obtener ID de la URL
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
-// Cargar datos
-async function cargar(){
-
-  const { data } = await db.from("clientes").select("*").eq("id", id).single();
-
-  if(data){
-    document.getElementById("perfil").innerHTML = `
-      <h2>${data.nombre}</h2>
-      <p>📞 ${data.telefono}</p>
-      <p>🐶 ${data.mascota}</p>
-      ${data.foto ? `<img src="${data.foto}" width="200">` : ""}
-    `;
-  } else {
-    document.getElementById("perfil").innerHTML = "Mascota no encontrada";
+async function cargar() {
+  if (!id) {
+    document.getElementById("perfil").innerHTML = "ID inválido";
+    return;
   }
 
+  try {
+    // 🔹 Nota: tabla en minúscula "clientes"
+    const { data, error } = await db.from("clientes").select("*").eq("id", id).single();
+
+    if (error) throw error;
+
+    if (data) {
+      document.getElementById("perfil").innerHTML = `
+        <h2>${data.nombre}</h2>
+        <p>📞 ${data.telefono}</p>
+        <p>🐶 ${data.mascota}</p>
+        ${data.foto ? `<img src="${data.foto}" alt="Foto de ${data.mascota}">` : ""}
+      `;
+    } else {
+      document.getElementById("perfil").innerHTML = "Cliente no encontrado";
+    }
+  } catch (err) {
+    console.error(err);
+    document.getElementById("perfil").innerHTML = "Error cargando datos. Revisa la consola.";
+  }
 }
 
 cargar();
-
 </script>
 
 </body>
