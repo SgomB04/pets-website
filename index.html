@@ -2,20 +2,20 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Clientes PRO</title>
+<title>Clientes PrintXcellence - Identificadores Mascotas</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
 <style>
-body{font-family:Arial;background:#f5f5f5;text-align:center;}
-.card{background:white;padding:20px;border-radius:15px;max-width:400px;margin:20px auto;}
-input{width:100%;padding:10px;margin:5px 0;}
-button{padding:10px;margin:5px;border:none;background:black;color:white;cursor:pointer;}
-img{width:100px;border-radius:10px;}
+body { font-family: Arial; background: #f5f5f5; text-align: center; }
+.card { background: white; padding: 20px; border-radius: 15px; max-width: 400px; margin: 20px auto; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+input { width: 100%; padding: 10px; margin: 5px 0; }
+button { padding: 10px; margin: 5px; border: none; background: black; color: white; cursor: pointer; border-radius: 6px; }
+img { width: 100px; border-radius: 10px; margin-top: 10px; }
+.green-btn { background: #28a745; font-weight: bold; }
 </style>
 
 </head>
-
 <body>
 
 <div id="login" class="card">
@@ -45,8 +45,7 @@ img{width:100px;border-radius:10px;}
 </div>
 
 <script>
-
-// 🔥 PEGA AQUÍ TUS DATOS
+// 🔥 Reemplaza con tus datos de Supabase
 const db = supabase.createClient(
   "https://qiuuzdviyapybndfiihs.supabase.co",
   "sb_publishable_uZByT22d0FbsJg4FBouTPw_EMhHFpTC"
@@ -57,7 +56,6 @@ let clientes = [];
 // 🔐 Detectar sesión
 async function checkUser(){
   const { data: { session } } = await db.auth.getSession();
-
   if(session){
     document.getElementById("login").style.display = "none";
     document.getElementById("app").style.display = "block";
@@ -72,19 +70,16 @@ checkUser();
 
 // 🔐 LOGIN
 document.getElementById("btnLogin").addEventListener("click", async () => {
-
   const { error } = await db.auth.signInWithPassword({
     email: document.getElementById("email").value,
     password: document.getElementById("password").value
   });
-
   if(error){
     alert(error.message);
   } else {
     alert("Login correcto");
     checkUser();
   }
-
 });
 
 // 🚪 LOGOUT
@@ -95,31 +90,22 @@ document.getElementById("btnLogout").addEventListener("click", async () => {
 
 // ➕ GUARDAR
 document.getElementById("btnGuardar").addEventListener("click", async () => {
-
   try {
-
     let archivo = document.getElementById("foto").files[0];
     let url = "";
 
-    // 📸 Subir foto (si hay)
     if (archivo) {
       let nombreArchivo = Date.now() + "_" + archivo.name;
-
       const { error: errorUpload } = await db.storage
         .from("fotos")
         .upload(nombreArchivo, archivo);
-
       if (errorUpload) {
         alert("Error subiendo imagen: " + errorUpload.message);
         return;
       }
-
-      url = db.storage
-        .from("fotos")
-        .getPublicUrl(nombreArchivo).data.publicUrl;
+      url = db.storage.from("fotos").getPublicUrl(nombreArchivo).data.publicUrl;
     }
 
-    // 💾 Guardar en DB
     const { error } = await db.from("clientes").insert([{
       nombre: document.getElementById("nombre").value,
       telefono: document.getElementById("telefono").value,
@@ -127,27 +113,20 @@ document.getElementById("btnGuardar").addEventListener("click", async () => {
       foto: url
     }]);
 
-    if (error) {
-      alert("Error guardando: " + error.message);
-      return;
-    }
+    if (error) { alert("Error guardando: " + error.message); return; }
 
-    // ✅ Éxito
     alert("Cliente guardado correctamente");
 
-    // Limpiar inputs
     document.getElementById("nombre").value = "";
     document.getElementById("telefono").value = "";
     document.getElementById("mascota").value = "";
     document.getElementById("foto").value = "";
 
-    // Recargar lista
     cargar();
 
   } catch (err) {
     alert("Error inesperado: " + err.message);
   }
-
 });
 
 // 📥 CARGAR
@@ -160,33 +139,22 @@ async function cargar(){
 // 🎨 RENDER
 function render(lista){
   let html = "";
-
   lista.forEach(c => {
     html += `
       <div class="card">
         <b>${c.nombre}</b><br>
         📞 <a href="tel:${c.telefono}">
-          <button style="
-            padding:8px 16px;
-            border:none;
-            background:#28a745;
-            color:white;
-            border-radius:6px;
-            cursor:pointer;
-            font-weight:bold;
-          ">
+          <button class="green-btn">
             Llamar a ${c.nombre}
           </button>
         </a><br>
         🐶 ${c.mascota}<br>
         ${c.foto ? `<img src="${c.foto}">` : ""}<br>
-
         <button onclick="eliminar('${c.id}')">Eliminar</button>
         <button onclick="editar('${c.id}')">Editar</button>
       </div>
     `;
   });
-
   document.getElementById("lista").innerHTML = html;
 }
 
@@ -213,16 +181,12 @@ window.editar = async function(id){
 
 // 🔍 BUSCAR
 document.getElementById("busqueda").addEventListener("keyup", () => {
-
   let texto = document.getElementById("busqueda").value.toLowerCase();
-
   let filtrados = clientes.filter(c =>
     c.nombre.toLowerCase().includes(texto) ||
     c.mascota.toLowerCase().includes(texto)
   );
-
   render(filtrados);
-
 });
 
 </script>
