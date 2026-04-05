@@ -143,13 +143,22 @@ function render(lista){
     html += `
       <div class="card">
         <b>${c.nombre}</b><br>
-        📞 <a href="tel:${c.telefono}">
-          <button class="green-btn">
-            Llamar a ${c.nombre}
-          </button>
-        </a><br>
         🐶 ${c.mascota}<br>
         ${c.foto ? `<img src="${c.foto}">` : ""}<br>
+        📞 
+        <a href="tel:${c.telefono}" style="text-decoration:none; display:inline-block;">
+          <button style="
+            padding:8px 16px;
+            border:none;
+            background:#28a745;
+            color:white;
+            border-radius:6px;
+            cursor:pointer;
+            font-weight:bold;
+          ">
+            Llamar a ${c.nombre}
+          </button>
+        </a><br><br>
         <button onclick="eliminar('${c.id}')">Eliminar</button>
         <button onclick="editar('${c.id}')">Editar</button>
       </div>
