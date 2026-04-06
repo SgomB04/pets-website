@@ -156,7 +156,7 @@ function render(lista){
             cursor:pointer;
             font-weight:bold;
           ">
-            Llamar a ${c.nombre}
+            Llamar al dueño
           </button>
         </a><br><br>
         <button onclick="eliminar('${c.id}')">Eliminar</button>
@@ -166,7 +166,6 @@ function render(lista){
   });
   document.getElementById("lista").innerHTML = html;
 }
-
 // 🗑️ ELIMINAR
 window.eliminar = async function(id){
   await db.from("clientes").delete().eq("id", id);
