@@ -2,35 +2,111 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Perfil de Cliente - Pet’s Website</title>
-<style>
-  body { font-family: Arial, sans-serif; background: #f5f5f5; text-align: center; padding: 20px; }
-  .card { background: #fff; padding: 20px; border-radius: 15px; max-width: 400px; margin: 20px auto; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-  img { width: 200px; border-radius: 10px; margin-top: 10px; }
-  h2 { margin-bottom: 10px; }
-  p { margin: 5px 0; }
-  button { padding:10px 20px; background:#28a745; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; }
-  button:hover { background:#218838; }
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Perfil de Mascota</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<style>
+
+/* 🔥 FONDO */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 10px;
+  text-align: center;
+
+  background: 
+    linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
+    url("fondo.png");
+
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+/* 🔥 CARD */
+.card {
+  background: rgba(255,255,255,0.95);
+  padding: 20px;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 400px;
+  margin: 30px auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  backdrop-filter: blur(4px);
+}
+
+/* 🐶 IMAGEN */
+img {
+  width: 100%;
+  max-width: 250px;
+  border-radius: 12px;
+  margin-top: 10px;
+}
+
+/* TEXTOS */
+h2 {
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+p {
+  font-size: 16px;
+  margin: 6px 0;
+}
+
+/* BOTONES */
+button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* 📞 LLAMAR */
+.call-btn {
+  background: #28a745;
+  color: white;
+}
+
+/* 💬 WHATSAPP */
+.whatsapp-btn {
+  background: #25D366;
+  color: white;
+}
+
+/* 📱 MOBILE */
+@media (max-width: 480px) {
+  h2 { font-size: 20px; }
+  p { font-size: 15px; }
+}
+
+</style>
+
 </head>
 <body>
 
 <div id="perfil" class="card">Cargando...</div>
 
 <script>
-// 🔥 Reemplaza con tus datos de Supabase
+
+// 🔥 Supabase
 const db = supabase.createClient(
   "https://qiuuzdviyapybndfiihs.supabase.co",
   "sb_publishable_uZByT22d0FbsJg4FBouTPw_EMhHFpTC"
 );
 
-// Obtener ID de la URL
+// 🔍 Obtener ID
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
-console.log("Perfil cargando para ID:", id);
-
+// 📥 CARGAR PERFIL
 async function cargar() {
   if (!id) {
     document.getElementById("perfil").innerHTML = "ID inválido";
@@ -38,34 +114,49 @@ async function cargar() {
   }
 
   try {
-    // 🔹 Tabla en minúscula "clientes"
-    const { data, error } = await db.from("clientes").select("*").eq("id", id).single();
+    const { data, error } = await db
+      .from("clientes")
+      .select("*")
+      .eq("id", id)
+      .single();
+
     if (error) throw error;
 
     if (data) {
+
+      // 🔥 Formatear teléfono para WhatsApp
+      const telefonoLimpio = data.telefono.replace(/\D/g, "");
+      const whatsappLink = `https://wa.me/52${telefonoLimpio}`;
+
       document.getElementById("perfil").innerHTML = `
-        <h2>${data.nombre}</h2>
+        <h2>🐾 ${data.nombre}</h2>
         <p>🐶 ${data.mascota}</p>
+
         ${data.foto ? `<img src="${data.foto}" alt="Foto de ${data.mascota}">` : ""}
+
         ${data.telefono ? `
-          <p>
-            <a href="tel:${data.telefono}" style="text-decoration:none;">
-              <button>Llamar al dueño</button>
-            </a>
-          </p>
+          <a href="tel:${data.telefono}" style="text-decoration:none;">
+            <button class="call-btn">📞 Llamar</button>
+          </a>
+
+          <a href="${whatsappLink}" target="_blank" style="text-decoration:none;">
+            <button class="whatsapp-btn">💬 WhatsApp</button>
+          </a>
         ` : ""}
       `;
+
     } else {
       document.getElementById("perfil").innerHTML = "Cliente no encontrado";
     }
 
   } catch (err) {
-    console.error("Error cargando cliente:", err);
-    document.getElementById("perfil").innerHTML = "Error cargando datos. Revisa la consola.";
+    console.error(err);
+    document.getElementById("perfil").innerHTML = "Error cargando información";
   }
 }
 
 cargar();
+
 </script>
 
 </body>
